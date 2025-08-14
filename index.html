@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Clima Agora</title>
+  <style>
+    :root {
+      --bg: #0f172a;        /* slate-900 */
+      --panel: #111827;     /* gray-900 */
+      --muted: #9ca3af;     /* gray-400 */
+      --accent: #22d3ee;    /* cyan-400 */
+      --ring: rgba(34, 211, 238, .35);
+      --text: #e5e7eb;      /* gray-200 */
+      --text-strong: #f9fafb; /* gray-50 */
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: linear-gradient(180deg, #0b1220, #0f172a);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .container {
+      max-width: 860px;
+      margin: 40px auto;
+      padding: 0 16px 48px;
+    }
+    h1 {
+      font-size: clamp(28px, 3vw, 40px);
+      color: var(--text-strong);
+      letter-spacing: 0.2px;
+      margin: 8px 0 16px;
+      text-align: center;
+    }
+    .sub {
+      text-align: center;
+      color: var(--muted);
+      margin: 0 0 24px;
+      font-size: 14px;
+    }
+    form#search-form {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 12px;
+      border-radius: 16px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: #0b1020;
+      color: var(--text);
+      outline: none;
+    }
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--ring);
+    }
+    button {
+      padding: 12px 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: #0b1020;
+      color: var(--text);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.04s ease, background 0.2s ease, border-color 0.2s ease;
+      white-space: nowrap;
+    }
+    button:hover { transform: translateY(-1px); }
+    button.primary {
+      background: linear-gradient(135deg, #0ea5e9, #22d3ee);
+      color: #001018;
+      border-color: transparent;
+      font-weight: 600;
+    }
+    #status {
+      min-height: 24px;
+      margin: 12px 4px 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .card {
+      margin-top: 18px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.35);
+    }
+    .card-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .place {
+      font-size: clamp(18px, 2.2vw, 24px);
+      font-weight: 600;
+      color: var(--text-strong);
+    }
+    .coords {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .current {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 18px;
+      align-items: center;
+    }
+    .current-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .emoji {
+      font-size: clamp(42px, 7vw, 72px);
+      line-height: 1;
+    }
+    .temp {
+      font-size: clamp(32px, 6vw, 54px);
+      font-weight: 700;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    .temp small { font-size: 16px; color: var(--muted); font-weight: 500; }
+    .facts {
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .facts strong { color: var(--text-strong); }
+    .daily {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 12px;
+    }
+    .day {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+    }
+    .day .d-emoji { font-size: 28px; line-height: 1; }
+    .day .d-name { margin-top: 6px; font-size: 12px; color: var(--muted); }
+    .day .d-temps { margin-top: 6px; font-size: 14px; }
+    .day .d-precip { margin-top: 4px; font-size: 12px; color: var(--muted); }
+
+    footer {
+      margin-top: 26px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 640px) {
+      form#search-form { grid-template-columns: 1fr; }
+      .current { grid-template-columns: 1fr; }
+      .daily { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Clima Agora</h1>
+    <p class="sub">Busque por uma cidade ou use sua localização. Dados fornecidos pela API pública Open‑Meteo.</p>
+
+    <form id="search-form" novalidate>
+      <input id="q" type="text" placeholder="Digite uma cidade (ex.: Lisboa, Porto, Madrid)" autocomplete="off" required />
+      <button class="primary" type="submit">Buscar</button>
+      <button id="use-geo" type="button" title="Usar minha localização">Usar minha localização</button>
+    </form>
+    <div id="status" role="status" aria-live="polite"></div>
+
+    <section id="result" hidden>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="place" id="place">—</div>
+            <div class="coords" id="coords">—</div>
+          </div>
+          <div class="updated" id="updated"></div>
+        </div>
+
+        <div class="current">
+          <div class="current-left">
+            <div class="emoji" id="emoji">☀️</div>
+            <div class="temp"><span id="temp">—</span><small>°C</small></div>
+          </div>
+          <div class="facts">
+            <div><strong>Vento:</strong> <span id="wind">—</span> km/h</div>
+            <div><strong>Sensação:</strong> <span id="apparent">—</span> °C</div>
+            <div><strong>Precipitação hoje:</strong> <span id="precip">—</span>%</div>
+          </div>
+        </div>
+
+        <div class="daily" id="daily"></div>
+      </div>
+    </section>
+
+    <footer>
+      <small>Open‑source. Dados: <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open‑Meteo</a>.</small>
+    </footer>
+  </main>
+
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+    const statusEl = $("#status");
+    const resultEl = $("#result");
+    const placeEl = $("#place");
+    const coordsEl = $("#coords");
+    const updatedEl = $("#updated");
+    const emojiEl = $("#emoji");
+    const tempEl = $("#temp");
+    const windEl = $("#wind");
+    const appEl = $("#apparent");
+    const precipEl = $("#precip");
+    const dailyEl = $("#daily");
+    const qEl = $("#q");
+    const formEl = $("#search-form");
+    const geoBtn = $("#use-geo");
+
+    const WMO_TO_EMOJI = {
+      0: "☀️",                // Clear sky
+      1: "🌤️", 2: "⛅", 3: "☁️", // Mainly clear → overcast
+      45: "🌫️", 48: "🌫️",       // Fog
+      51: "🌦️", 53: "🌦️", 55: "🌦️", // Drizzle
+      56: "🌧️", 57: "🌧️",        // Freezing drizzle
+      61: "🌧️", 63: "🌧️", 65: "🌧️", // Rain
+      66: "🌧️", 67: "🌧️",        // Freezing rain
+      71: "❄️", 73: "❄️", 75: "❄️",  // Snow fall
+      77: "🌨️",                   // Snow grains
+      80: "🌦️", 81: "🌦️", 82: "🌧️", // Rain showers
+      85: "🌨️", 86: "🌨️",          // Snow showers
+      95: "⛈️", 96: "⛈️", 99: "⛈️"   // Thunderstorm
+    };
+
+    function getEmojiFor(code) {
+      return WMO_TO_EMOJI[code] ?? "🌡️";
+    }
+
+    function toShortDay(dateStr) {
+      const d = new Date(dateStr + "T00:00:00");
+      return d.toLocaleDateString("pt-PT", { weekday: "short" });
+    }
+
+    function fmt(num, digits = 0) {
+      if (num === null || num === undefined || Number.isNaN(num)) return "—";
+      return Number(num).toFixed(digits);
+    }
+
+    async function geocodeCity(name) {
+      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=pt&format=json`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Falha ao consultar geocoding");
+      const data = await res.json();
+      if (!data.results || !data.results.length) return null;
+      const r = data.results[0];
+      return {
+        name: r.name,
+        country: r.country_code,
+        admin1: r.admin1,
+        lat: r.latitude,
+        lon: r.longitude,
+      };
+    }
+
+    async function fetchForecast(lat, lon) {
+      const params = new URLSearchParams({
+        latitude: lat,
+        longitude: lon,
+        timezone: "auto",
+        forecast_days: "5",
+        current: "temperature_2m,apparent_temperature,wind_speed_10m,weather_code",
+        daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
+      });
+      const url = `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Falha ao obter previsão");
+      return await res.json();
+    }
+
+    function renderCurrent(meta, forecast) {
+      const { name, admin1, country, lat, lon } = meta;
+      placeEl.textContent = [name, admin1, country].filter(Boolean).join(", ");
+      coordsEl.textContent = `Lat ${fmt(lat, 3)}, Lon ${fmt(lon, 3)}`;
+
+      const cur = forecast.current;
+      const daily = forecast.daily;
+
+      emojiEl.textContent = getEmojiFor(cur.weather_code);
+      tempEl.textContent = fmt(cur.temperature_2m, 0);
+      appEl.textContent = fmt(cur.apparent_temperature, 0);
+      windEl.textContent = fmt(cur.wind_speed_10m, 0);
+      const todayIdx = 0;
+      const precipToday = daily.precipitation_probability_max?.[todayIdx];
+      precipEl.textContent = fmt(precipToday, 0);
+
+      const now = new Date();
+      updatedEl.textContent = now.toLocaleString("pt-PT");
+    }
+
+    function renderDaily(forecast) {
+      const d = forecast.daily;
+      if (!d || !d.time) return;
+      dailyEl.innerHTML = "";
+      for (let i = 0; i < d.time.length; i++) {
+        const day = document.createElement("div");
+        day.className = "day";
+        day.innerHTML = `
+          <div class="d-emoji">${getEmojiFor(d.weather_code[i])}</div>
+          <div class="d-name">${toShortDay(d.time[i])}</div>
+          <div class="d-temps"><strong>${fmt(d.temperature_2m_max[i],0)}°</strong> / ${fmt(d.temperature_2m_min[i],0)}°</div>
+          <div class="d-precip">🌧 ${fmt(d.precipitation_probability_max?.[i],0)}%</div>
+        `;
+        dailyEl.appendChild(day);
+      }
+    }
+
+    async function runByCity(name) {
+      try {
+        statusEl.textContent = "Buscando cidade…";
+        resultEl.hidden = true;
+        const meta = await geocodeCity(name);
+        if (!meta) {
+          statusEl.textContent = "Nenhum resultado para essa cidade.";
+          return;
+        }
+        statusEl.textContent = "Carregando previsão…";
+        const forecast = await fetchForecast(meta.lat, meta.lon);
+        renderCurrent(meta, forecast);
+        renderDaily(forecast);
+        resultEl.hidden = false;
+        statusEl.textContent = "";
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = "Erro ao obter dados. Tente novamente.";
+      }
+    }
+
+    async function runByGeo() {
+      if (!navigator.geolocation) {
+        statusEl.textContent = "Geolocalização não suportada pelo navegador.";
+        return;
+      }
+      statusEl.textContent = "Obtendo sua localização…";
+      resultEl.hidden = true;
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        try {
+          const { latitude: lat, longitude: lon } = pos.coords;
+          statusEl.textContent = "Carregando previsão…";
+          const forecast = await fetchForecast(lat, lon);
+          // Nome genérico para localização atual
+          const meta = { name: "Minha localização", admin1: "", country: "", lat, lon };
+          renderCurrent(meta, forecast);
+          renderDaily(forecast);
+          resultEl.hidden = false;
+          statusEl.textContent = "";
+        } catch (e) {
+          console.error(e);
+          statusEl.textContent = "Erro ao obter dados.";
+        }
+      }, (err) => {
+        statusEl.textContent = "Não foi possível obter sua localização.";
+      }, { enableHighAccuracy: true, timeout: 10000 });
+    }
+
+    formEl.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const q = qEl.value.trim();
+      if (!q) {
+        statusEl.textContent = "Digite o nome de uma cidade.";
+        return;
+      }
+      runByCity(q);
+    });
+
+    geoBtn.addEventListener("click", () => {
+      runByGeo();
+    });
+
+    // Sugestão: começar mostrando Lisboa
+    runByCity("Lisboa");
+  </script>
+</body>
+</html>
+
